@@ -18,11 +18,14 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ColorConvertOp;
+import java.awt.image.ConvolveOp;
+import java.awt.image.Kernel;
 import java.awt.image.WritableRaster;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.imageio.ImageIO;
 import javax.naming.spi.DirStateFactory.Result;
+import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -39,7 +42,7 @@ public class IP2019 extends JFrame  implements ActionListener{
 
 	ImgPanel imgSrc,imgDst;
 	
-	JFileChooser fc = new JFileChooser("c:/Users/Dário Ribeiro/Pictures");
+	JFileChooser fc = new JFileChooser("c:/Users/DÃ¡rio Ribeiro/Pictures/Wallpapers Mistos");
 	
 	public static void main(String[] args)  {
 
@@ -57,15 +60,19 @@ public class IP2019 extends JFrame  implements ActionListener{
 		setJMenuBar(mb);
 		
 		JMenu menu = new JMenu("File");
+		JMenuItem mi = new JMenuItem("");
 		
-		JMenuItem mi = new JMenuItem("Open image");
+		mi = new JMenuItem("Open image");
 		mi.addActionListener(this);
 		menu.add(mi);
 		mi = new JMenuItem("Save image");
+		mi.addActionListener(this);
 		menu.add(mi);
 		mi = new JMenuItem("Copy image");
+		mi.addActionListener(this);
 		menu.add(mi);
 		mi = new JMenuItem("Exit");
+		mi.addActionListener(this);
 		menu.add(mi);
 		mb.add(menu);
 		
@@ -76,6 +83,16 @@ public class IP2019 extends JFrame  implements ActionListener{
 		mi = new JMenuItem("RGB To Gray II");
 		mi.addActionListener(this);
 		menu.add(mi);
+		mi = new JMenuItem("Binarization");
+		mi.addActionListener(this);
+		menu.add(mi);
+		mi = new JMenuItem("Edge");
+		mi.addActionListener(this);
+		menu.add(mi);
+		mi = new JMenuItem("Smooth");
+		mi.addActionListener(this);
+		menu.add(mi);
+		
 		mb.add(menu);
 		
 		
@@ -103,22 +120,18 @@ public class IP2019 extends JFrame  implements ActionListener{
 					pack();
 				} catch (Exception e1) {
 					e1.printStackTrace();
-				}
-				
-				
-			//
-				
+				}	
 			}
-			
-			
-		}else if(menuitem.equals("Save image")){
-			
-		}else if(menuitem.equals("Copy image")){
-			
+		
+		}
+		else if(menuitem.equals("Save image")){
+		}else if(menuitem.equals("Copy image")) {
+			imgSrc.setImage(imgDst.getImage());
 		}else if (menuitem.equals("Exit")) {
 			
 		}else {
-			processing(menuitem);		
+			processing(menuitem);	
+		
 			}
 		
 	}
@@ -131,7 +144,30 @@ public class IP2019 extends JFrame  implements ActionListener{
 		imgDst.setImage(MyRGBToGray(imgSrc.getImage()));
 		pack();
 		
-	}
+		}else if (menuitem.equals("Binarization")) {
+			imgDst.setImage(Binarization(imgSrc.getImage()));
+			pack();
+		}else if (menuitem.equals("Edge")) {
+			float[] data = {0f,-1f,0f,
+							-1f,4f,-1f,
+							0f,-1f,0f};
+			
+			Kernel k = new Kernel(3, 3, data);
+			op = new ConvolveOp(k);
+			pack();
+		}else if (menuitem.equals("Smooth")) {
+			float[] data = new float[9];
+			for (int i = 0; i < 9; i++) {
+				data[i] = 1/9f;
+				
+				
+			}
+	
+	Kernel k = new Kernel(3, 3, data);
+	op = new ConvolveOp(k);
+	pack();
+			
+		}
 		if (op != null) {
 			imgDst.setImage(op.filter(imgSrc.getImage(), null));
 			pack();
@@ -140,22 +176,58 @@ public class IP2019 extends JFrame  implements ActionListener{
 		
 	}
 
-	private BufferedImage MyRGBToGray(BufferedImage imgIN) {
-		//Criamos uma imagem de saida igual á imagem de entrada , vazia mas com as mesmas dimensois, pois é necessario inicializar a variavel
-		BufferedImage imgOUT = new BufferedImage(imgIN.getWidth(),imgIN.getHeight(),imgIN.getType());
+	private BufferedImage Binarization(BufferedImage bi) {
+BufferedImage imgIN = new BufferedImage(bi.getWidth(), bi.getHeight(), BufferedImage.TYPE_INT_RGB);
+		
+		Graphics2D imG2 = (Graphics2D)imgIN.getGraphics();
+		imG2.drawImage(bi, 0, 0, null);
+			
+		//Criamos uma imagem de saida igual Ã¡ imagem de entrada , vazia mas com as mesmas dimensois, pois Ã© necessario inicializar a variavel
+		BufferedImage imgOUT = new BufferedImage(imgIN.getWidth(),imgIN.getHeight(),BufferedImage.TYPE_INT_RGB);
 		
 		WritableRaster rasterImgIN = imgIN.getRaster();
 		WritableRaster rasterImgOUT = imgOUT.getRaster();
 		
-		int[] rgba = new int[4];
+		int[] rgb = new int[3];
 		
 		for (int x = 0; x < imgIN.getWidth(); x++) {
 			for (int y = 0; y < imgIN.getHeight(); y++) {
-				rasterImgIN.getPixel(x, y, rgba);
+				rasterImgIN.getPixel(x, y, rgb);
 				
-				int gray =(int)((rgba[0] + rgba[1] + rgba[2])/3f);
-				rgba[0] = rgba[1] = rgba[2] = gray;
-				rasterImgOUT.setPixel(x, y, rgba);
+				if (rgb[0]< 150) {
+					rgb[0]=rgb[1]=rgb[2] = 255;
+					
+				}else
+					rgb[0]= rgb[1]=rgb[2] = 0;
+			
+				rasterImgOUT.setPixel(x, y, rgb);
+			}
+			
+		}
+			
+			
+		return imgOUT;
+	}
+	private BufferedImage MyRGBToGray(BufferedImage bi) {
+		BufferedImage imgIN = new BufferedImage(bi.getWidth(), bi.getHeight(), BufferedImage.TYPE_INT_RGB);
+		
+		Graphics2D imG2 = (Graphics2D)imgIN.getGraphics();
+		imG2.drawImage(bi, 0, 0, null);
+			
+		//Criamos uma imagem de saida igual Ã¡ imagem de entrada , vazia mas com as mesmas dimensois, pois Ã© necessario inicializar a variavel
+		BufferedImage imgOUT = new BufferedImage(imgIN.getWidth(),imgIN.getHeight(),BufferedImage.TYPE_INT_RGB);
+		
+		WritableRaster rasterImgIN = imgIN.getRaster();
+		WritableRaster rasterImgOUT = imgOUT.getRaster();
+		
+		int[] rgb = new int[3];
+		
+		for (int x = 0; x < imgIN.getWidth(); x++) {
+			for (int y = 0; y < imgIN.getHeight(); y++) {
+				rasterImgIN.getPixel(x, y, rgb);
+				int gray =(int)((rgb[0] + rgb[1] + rgb[2])/3f);
+				rgb[0] = rgb[1] = rgb[2] = gray;
+				rasterImgOUT.setPixel(x, y, rgb);
 			}
 			
 		}
@@ -194,7 +266,7 @@ public void paintComponent(Graphics g) {
 }
 
 public void setImage(BufferedImage bi) {
-image = bi;
+image = bi;	
 setPreferredSize(new Dimension(bi.getWidth(),bi.getHeight()));
 repaint();
 }
