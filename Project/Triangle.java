@@ -12,13 +12,19 @@ public class Triangle implements Shape {
 
 	GeneralPath triangle_path;
 	
-	public Triangle(float posx, float s) { // w = width, h = height ( x,y ) = starting position
+	public Triangle(float posx, float posy, float size) { // w = width, h = height ( x,y ) = starting position
 		triangle_path = new GeneralPath();
 	
 		
-		triangle_path.moveTo(0.0f, -s);
-		triangle_path.lineTo(s, s);
-		triangle_path.lineTo(-s, s);
+		float x1 = posx + size/2;
+		
+		
+		
+		
+		
+		triangle_path.moveTo(x1, posy);
+		triangle_path.lineTo(posx, posy+size);
+		triangle_path.lineTo(posx+size, posy+size);
 		triangle_path.closePath();
 	   
 	}
